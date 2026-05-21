@@ -55,8 +55,6 @@ class CredentialFactoryMdocPid : CredentialFactory {
     override val proofSigningAlgorithms: List<String>
         get() = CredentialFactory.DEFAULT_PROOF_SIGNING_ALGORITHMS
 
-    override val acceptAndroidKeyAttestation: Boolean get() = true
-
     override val cryptographicBindingMethods: List<String>
         get() = listOf("cose_key")
 

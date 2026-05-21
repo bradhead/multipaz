@@ -44,7 +44,7 @@ interface CredentialFactory {
     val scope: String
     val format: CredentialFormat
     val requireKeyAttestation: Boolean get() = true
-    val acceptAndroidKeyAttestation: Boolean get() = false
+    val acceptAndroidKeyAttestation: Boolean get() = true
     val keyMintSecurityLevel: AndroidKeystoreSecurityLevel get() =
         AndroidKeystoreSecurityLevel.TRUSTED_ENVIRONMENT
     val proofSigningAlgorithms: List<String>
