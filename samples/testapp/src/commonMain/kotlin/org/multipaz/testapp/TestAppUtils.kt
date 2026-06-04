@@ -64,7 +64,6 @@ import org.multipaz.securearea.SecureArea
 import org.multipaz.testapp.ui.DocumentCreationMode
 import org.multipaz.util.Logger
 import org.multipaz.util.truncateToWholeSeconds
-import org.multipaz.verification.DcqlRequestDefinition
 import org.multipaz.verification.VerificationSession
 import org.multipaz.verification.VerificationUtil
 import kotlin.time.Clock
@@ -111,31 +110,30 @@ object TestAppUtils {
         handover: DataItem,
         signRequest: Boolean = true,
     ): VerificationSession {
-        val requestDefinition = when (request) {
+        val (dcql, transactionData) = when (request) {
             is SingleDocumentCannedRequest -> if (requestSdJwtVc) {
-                DcqlRequestDefinition(
-                    dcql = request.jsonRequest!!.toDcql().toString(),
-                    transactionData = request.toJsonTransactionData("cred1")
+                Pair(
+                    request.jsonRequest!!.toDcql().toString(),
+                    request.toJsonTransactionData("cred1")
                 )
             } else {
-                DcqlRequestDefinition(
-                    dcql = request.mdocRequest!!
-                        .toDcql(app.zkSystemRepository.getAllZkSystemSpecs()).toString(),
-                    transactionData = request.toJsonTransactionData("cred1")
+                Pair(
+                    request.mdocRequest!!.toDcql(app.zkSystemRepository.getAllZkSystemSpecs()).toString(),
+                    request.toJsonTransactionData("cred1")
                 )
             }
             is MultiDocumentCannedRequest ->
-                DcqlRequestDefinition(
-                    dcql = request.dcqlString,
-                    transactionData = request.transactionData?.let { text ->
+                Pair(
+                    request.dcqlString,
+                    request.transactionData?.let { text ->
                         Json.parseToJsonElement(text).jsonArray.map { it.toString() }
                     } ?: emptyList()
                 )
         }
         return VerificationUtil.generateVerificationSessionForDcql(
             requestTypes = setOf(VerificationSession.RequestType.ISO_18013_PROXIMITY),
-            dcql = requestDefinition.dcql,
-            transactionData = requestDefinition.transactionData,
+            dcql = dcql,
+            transactionData = transactionData,
             readerAuthenticationKey = if (signRequest) app.readerKey else null,
             deviceEngagement = deviceEngagement,
             eReaderKey = eReaderKey,

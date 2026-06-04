@@ -32,7 +32,6 @@ import org.multipaz.util.toBase64Url
 import org.multipaz.testapp.ShowResponseMetadata
 import org.multipaz.testapp.TestAppConfiguration
 import org.multipaz.utopia.knowntypes.wellKnownMultipleDocumentRequests
-import org.multipaz.verification.DcqlRequestDefinition
 import org.multipaz.verification.VerificationSession
 import org.multipaz.verification.VerificationUtil
 import kotlin.random.Random
@@ -296,19 +295,18 @@ private suspend fun doDcRequestFlow(
         null
     }
 
-    val requestDefinition = when (request) {
+    val (dcql, transactionData) = when (request) {
         is SingleDocumentCannedRequest -> {
             when (format) {
-                CredentialFormat.ISO_MDOC -> DcqlRequestDefinition(
-                    dcql = request.mdocRequest!!
-                        .toDcql(app.zkSystemRepository.getAllZkSystemSpecs()).toString(),
+                CredentialFormat.ISO_MDOC -> Pair(
+                    request.mdocRequest!!.toDcql(app.zkSystemRepository.getAllZkSystemSpecs()).toString(),
                     // VerificationUtils.calcDcqlMdoc currently always uses "calc1"
-                    transactionData = request.toJsonTransactionData("cred1")
+                    request.toJsonTransactionData("cred1")
                 )
 
-                CredentialFormat.IETF_SDJWT -> DcqlRequestDefinition(
-                    dcql = request.jsonRequest!!.toDcql().toString(),
-                    transactionData = request.toJsonTransactionData("cred1")
+                CredentialFormat.IETF_SDJWT -> Pair(
+                    request.jsonRequest!!.toDcql().toString(),
+                    request.toJsonTransactionData("cred1")
                 )
             }
         }
@@ -316,17 +314,17 @@ private suspend fun doDcRequestFlow(
             val transactions = request.transactionData?.let { data ->
                 Json.parseToJsonElement(data).jsonArray
             }
-            DcqlRequestDefinition(
-                dcql = request.dcqlString,
-                transactionData = transactions?.map { it.toString() } ?: emptyList(),
+            Pair(
+                request.dcqlString,
+                transactions?.map { it.toString() } ?: emptyList(),
             )
         }
     }
 
     val session = VerificationUtil.generateVerificationSessionForDcql(
         requestTypes = protocol.requestTypes,
-        dcql = requestDefinition.dcql,
-        transactionData = requestDefinition.transactionData,
+        dcql = dcql,
+        transactionData = transactionData,
         nonce = nonce,
         origin = origin,
         clientId = clientId,

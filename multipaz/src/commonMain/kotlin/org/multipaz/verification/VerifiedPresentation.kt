@@ -19,7 +19,6 @@ import kotlin.time.Instant
  * @property validUntil the point in time this presentation is valid until.
  * @property signedAt the point in time this was signed.
  * @property expectedUpdate the point in time an update is expected, if any.
- * @property identifier DCQL identifier for this document, if any
  */
 sealed class VerifiedPresentation() {
     abstract val documentSignerCertChain: X509CertChain?
@@ -30,5 +29,4 @@ sealed class VerifiedPresentation() {
     abstract val validUntil: Instant?
     abstract val signedAt: Instant?
     abstract val expectedUpdate: Instant?
-    abstract val identifier: String?
 }

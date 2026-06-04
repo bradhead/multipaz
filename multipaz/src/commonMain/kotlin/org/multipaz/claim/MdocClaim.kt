@@ -23,7 +23,6 @@ import kotlinx.datetime.toLocalDateTime
  * @property namespaceName the mdoc namespace.
  * @property dataElementName the data element name.
  * @property value the value of the claim.
- * @property queryIdentifier "id" attribute of the claim query if this claim originated from a query
  */
 data class MdocClaim(
     override val displayName: String,
@@ -32,7 +31,6 @@ data class MdocClaim(
     val namespaceName: String,
     val dataElementName: String,
     val value: DataItem,
-    override val queryIdentifier: String? = null
 ) : Claim(displayName, attribute) {
 
     override fun render(timeZone: TimeZone): String {
@@ -165,4 +163,20 @@ fun List<MdocClaim>.organizeByNamespace(): Map<String, List<MdocClaim>> {
         claimsByNamespace.getOrPut(claim.namespaceName, { mutableListOf() }).add(claim)
     }
     return claimsByNamespace
+}
+
+/**
+ * Gets a list of [MdocClaim]s for a given namespace.
+ *
+ * @param namespace the namespace to get claims for
+ * @return a map from data element name to the [MdocClaim], for claims in the given namespace.
+ */
+fun List<MdocClaim>.getClaimsInNamespace(namespace: String): Map<String, MdocClaim> {
+    val claimsInNamespace = mutableMapOf<String, MdocClaim>()
+    for (claim in this) {
+        if (claim.namespaceName == namespace) {
+            claimsInNamespace[claim.dataElementName] = claim
+        }
+    }
+    return claimsInNamespace
 }

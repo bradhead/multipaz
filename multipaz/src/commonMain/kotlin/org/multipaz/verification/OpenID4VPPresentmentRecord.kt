@@ -46,7 +46,6 @@ class OpenID4VPPresentmentRecord(
         val request = Json.parseToJsonElement(vpRequest).jsonObject
         val transactionDataMap = getTransactionData(request, documentTypeRepository)
         val nonce = request["nonce"]!!.jsonPrimitive.content
-        val queryData = QueryData.fromDcql(request["dcql_query"]!!.jsonObject)
         return VerificationUtil.verifyOpenID4VPResponse(
             now = atTime,
             vpToken = Json.parseToJsonElement(vpToken).jsonObject,
@@ -55,15 +54,7 @@ class OpenID4VPPresentmentRecord(
             documentTypeRepository = documentTypeRepository,
             zkSystemRepository = zkSystemRepository,
             transactionDataMap = transactionDataMap,
-            queryData = queryData.associateBy { it.id!! }
         )
-    }
-
-    override fun getTransactionData(
-        documentTypeRepository: DocumentTypeRepository
-    ): Map<String, List<TransactionDataJson>> {
-        val request = Json.parseToJsonElement(vpRequest).jsonObject
-        return getTransactionData(request, documentTypeRepository)
     }
 
     companion object {

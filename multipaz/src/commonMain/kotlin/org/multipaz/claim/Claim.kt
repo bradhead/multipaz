@@ -25,7 +25,7 @@ import org.multipaz.request.MdocRequestedClaim
 /**
  * Base class used for representing a claim.
  *
- * @property displayName a short human readable string describing the claim.
+ * @property displayName a short human-readable string describing the claim.
  * @property attribute a [DocumentAttribute], if the claim is for a well-known attribute.
  */
 @CborSerializationImplemented(schemaId = "")
@@ -34,12 +34,7 @@ sealed class Claim(
     open val attribute: DocumentAttribute?,
 ) {
     /**
-     * If this [Claim] was generated as a result of a query, claim id.
-     */
-    abstract val queryIdentifier: String?
-
-    /**
-     * Returns the value of a claim as a human readable string.
+     * Returns the value of a claim as a human-readable string.
      *
      * If [Claim.attribute] is set, its type is used when rendering for example to resolve integer options to strings.
      *

@@ -24,5 +24,4 @@ data class JsonVerifiedPresentation(
     override val expectedUpdate: Instant?,
     val vct: String,
     val transactionResponses: Map<String, JsonElement>?,
-    override val identifier: String?
 ): VerifiedPresentation()

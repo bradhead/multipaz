@@ -25,5 +25,4 @@ data class MdocVerifiedPresentation(
     override val expectedUpdate: Instant?,
     val docType: String,
     val transactionResponses: Map<String, Map<String, DataItem>>?,
-    override val identifier: String?
 ): VerifiedPresentation()

@@ -13,18 +13,10 @@ import kotlinx.serialization.json.putJsonArray
 import kotlinx.serialization.json.putJsonObject
 import org.multipaz.cbor.Cbor
 import org.multipaz.cbor.DataItem
-import org.multipaz.cbor.Simple
-import org.multipaz.cbor.Tagged
 import org.multipaz.cbor.Tstr
-import org.multipaz.cbor.addCborArray
 import org.multipaz.cbor.annotation.CborSerializable
-import org.multipaz.cbor.buildCborArray
-import org.multipaz.cbor.toDataItem
-import org.multipaz.crypto.Algorithm
 import org.multipaz.crypto.AsymmetricKey
-import org.multipaz.crypto.Crypto
 import org.multipaz.crypto.EcPrivateKey
-import org.multipaz.crypto.EcPublicKey
 import org.multipaz.crypto.Hpke
 import org.multipaz.crypto.JsonWebEncryption
 import org.multipaz.openid.OpenID4VP
@@ -50,15 +42,10 @@ import kotlin.collections.component2
  *
  * @param requests individual requests that are semantically equivalent, but formatted to be sent
  *  through various supported protocols
- * @param signed whether the verification request(s) are signed
- * @param requestDefinition [RequestDefinition] that describes the semantics of the verification
- *  request being processed
  */
 @CborSerializable
 class VerificationSession(
     val requests: List<Request>,
-    val signed: Boolean,
-    val requestDefinition: RequestDefinition?,
 ) {
     /**
      * @return a request of type [T] from the list of [requests] or null if it cannot be found.
@@ -100,6 +87,7 @@ class VerificationSession(
             }
             findOrNull<DcOpenID4VPRequest>()?.let { request ->
                 addJsonObject {
+                    val signed = true // TODO: figure out by looking at the request
                     put("protocol", if (signed) {
                         "openid4vp-v1-signed"
                     } else {
@@ -147,10 +135,9 @@ class VerificationSession(
             eReaderKey = request.eDeviceKey.publicKey
         )
         return Iso18013PresentmentRecord(
-            response = deviceResponse,
-            request = request.deviceRequest,
+            deviceResponse = deviceResponse,
+            deviceRequest = request.deviceRequest,
             sessionTranscript = sessionTranscript,
-            requestDefinition = requestDefinition,
             encryptionInfo = null,
             origin = null,
             eDeviceKey = request.eDeviceKey
@@ -423,9 +410,8 @@ class VerificationSession(
         val deviceResponseRaw = decrypter.decrypt(ciphertext = cipherText, aad = byteArrayOf())
 
         return Iso18013PresentmentRecord(
-            response = Cbor.decode(deviceResponseRaw),
-            request = request.deviceRequest,
-            requestDefinition = requestDefinition,
+            deviceResponse = Cbor.decode(deviceResponseRaw),
+            deviceRequest = request.deviceRequest,
             origin = request.origin,
             sessionTranscript = sessionTranscript,
             encryptionInfo = ByteString(Cbor.encode(request.encryptionInfo)),
@@ -437,6 +423,7 @@ class VerificationSession(
         request: OpenID4VPRequest,
         vpToken: String
     ): PresentmentRecord {
+        val signed = true // TODO: determine if signed by looking at request
         val vpRequest = if (signed) {
             // Signed request, extract JWT body
             val parsedRequest = Json.parseToJsonElement(request.openID4VPRequest).jsonObject
@@ -446,12 +433,8 @@ class VerificationSession(
             request.openID4VPRequest
         }
         val jsonRequest = Json.parseToJsonElement(vpRequest).jsonObject
-        val queryData = QueryData.fromDcql(jsonRequest["dcql_query"]!!.jsonObject)
         val nonceFromRequest = jsonRequest["nonce"]!!.jsonPrimitive.content
-        val sessionTranscript = if (queryData.find { it is MdocQueryData } == null) {
-            // No mdocs, session transcript is not needed
-            null
-        } else if (request is DcOpenID4VPDraft24Request) {
+        val sessionTranscript = if (request is DcOpenID4VPDraft24Request) {
             // OpenID4VP Draft 24 over W3C DC API: handover info is [origin, clientId, nonce]
             // where clientId is the request's client_id for signed requests and the synthetic
             // `web-origin:<origin>` for unsigned requests.

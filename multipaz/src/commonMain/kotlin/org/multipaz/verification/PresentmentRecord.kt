@@ -23,7 +23,7 @@ sealed class PresentmentRecord() {
      *     [PaymentProcessor.createTransaction]).
      * @throws org.multipaz.rpc.handler.InvalidRequestException if the nonce does not match.
      */
-    abstract suspend fun verifyNonce(nonce: ByteString)
+    protected abstract suspend fun verifyNonce(nonce: ByteString)
 
     /**
      * Verifies the cryptographic validity of the presentment and the issuer trust chain.
@@ -38,18 +38,6 @@ sealed class PresentmentRecord() {
         documentTypeRepository: DocumentTypeRepository? = null,
         zkSystemRepository: ZkSystemRepository? = null
     ): List<VerifiedPresentation>
-
-    /**
-     * Parses and returns transaction data entries using the given [documentTypeRepository]
-     * to resolve transaction types.
-     *
-     * @param documentTypeRepository repository used to look up transaction type definitions, it
-     *  must be non-null if any transactions are present
-     * @return map from credential ID to parsed transaction data entries.
-     */
-    abstract fun getTransactionData(
-        documentTypeRepository: DocumentTypeRepository
-    ): Map<String, List<TransactionData>>
 
     companion object
 }
